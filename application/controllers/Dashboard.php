@@ -662,7 +662,9 @@ class Dashboard extends CI_Controller {
         );
 
         $data[ 'record' ] =  $this->globalmodel->get_list( 'mp', "mp_jalur = '".$this->jalur."'" );
+
         $data[ 'hadir' ] = $this->m_data->edit_data( $where, 'hadir' )->result();
+        $data[ 'henkaten' ] = $this->m_data->edit_data( $where, 'henkaten' )->result();
 
         $data[ 'kodeabsen' ] = $this->m_data->get_data( 'kodeabsen' )->result();
 
