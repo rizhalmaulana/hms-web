@@ -1,5 +1,5 @@
 <?php
-defined( 'BASEPATH' ) or exit( 'No direct script access allowed' );
+defined('BASEPATH') or exit('No direct script access allowed');
 
 /*
 | -------------------------------------------------------------------
@@ -74,13 +74,13 @@ Whether verify the server certificate or not
 $active_group = 'default';
 $query_builder = TRUE;
 
-$db[ 'default' ] = array(
-    'dsn'	=> '',
+$db['default'] = array(
+    'dsn'    => '',
     'hostname' => '127.0.0.1',
     // 'username' => 'bodygital',
     // 'password' => 'B0DYgital1',
     'username' => 'root',
-    'password' => 'root12345',
+    'password' => '',
     'database' => 'hms',
     'dbdriver' => 'mysqli',
     'dbprefix' => '',
