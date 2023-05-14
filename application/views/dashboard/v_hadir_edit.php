@@ -20,6 +20,8 @@
                 <div class="box box-primary">
                     <div class="box-body">
                         <?php foreach($hadir as $k){ ?>
+							<?php foreach($henkaten as $hktn){ ?>
+
 							<form method="post" action="<?= base_url('dashboard/hadir_update') ?>">
 								<div class="box-body">
 									<div class="form-group">
@@ -36,7 +38,7 @@
 										<label>NPK</label>
 										<input list="data_pegawai" class="form-control" type="text" name="mp_id"
 											id="mp_id" placeholder="Pilih NPK / Nama" onchange="return autofill2();"
-											value="<?= set_value('mp_id'); ?>">
+											value="<?= $k->hadir_npk; ?>">
 										<?= form_error('mp_id'); ?>
 									</div>
 									<datalist id="data_pegawai">
@@ -81,14 +83,14 @@
 									<div class="form-group">
 										<label>Nama</label>
 										<input type="text" name="mp_nama" id="mp_nama" class="form-control"
-											placeholder="Nama MP" value="<?= set_value('mp_nama'); ?>" readonly>
+											placeholder="Nama MP" value="<?= $k->hadir_nama; ?>" readonly>
 										<?= form_error('mp_nama'); ?>
 									</div>
 
 									<div class="form-group">
 										<label>Jalur</label>
 										<input type="text" name="mp_jalur" id="mp_jalur" class="form-control"
-											placeholder="Nama Jalur" value="<?= set_value('mp_jalur'); ?>"
+											placeholder="Nama Jalur" value="<?= $k->hadir_jalur; ?>"
 											readonly>
 										<?= form_error('mp_jalur'); ?>
 									</div>
@@ -96,7 +98,7 @@
 									<div class="form-group">
 										<label>Pos</label>
 										<input type="text" name="mp_pos" id="mp_pos" class="form-control"
-											placeholder="Nama Pos" value="<?= set_value('mp_pos'); ?>"
+											placeholder="Nama Pos" value="<?= $k->hadir_pos; ?>"
 											readonly>
 										<?= form_error('mp_pos'); ?>
 									</div>
@@ -104,7 +106,7 @@
 									<div class="form-group">
 										<label>Status</label>
 										<input type="text" name="mp_status" id="mp_status" class="form-control"
-											placeholder="Status" value="<?= set_value('mp_status'); ?>"
+											placeholder="Status" value="<?= $k->hadir_status; ?>"
 											readonly>
 										<?= form_error('mp_status'); ?>
 									</div>
@@ -112,7 +114,7 @@
 									<div class="form-group">
 										<label>Shift</label>
 										<input type="text" name="mp_shift" id="mp_shift" class="form-control"
-											placeholder="Shift" value="<?= set_value('mp_shift'); ?>"
+											placeholder="Shift" value="<?= $k->hadir_shift; ?>"
 											readonly>
 										<?= form_error('mp_shift'); ?>
 									</div>
@@ -166,7 +168,7 @@
 										<label>NPK Pengganti</label>
 										<input list="data_mahasiswa" class="form-control" type="text" name="mp_peng_id"
 											id="mp_peng_id" placeholder="Pilih NPK / Nama Pengganti" onchange="return autofill();"
-											value="<?= set_value('mp_peng_id'); ?>" autocomplete="off">
+											value="<?= $hktn->hen_ganti; ?>" autocomplete="off">
 										<?= form_error('mp_peng_id'); ?>
 									</div>
 									<datalist id="data_mahasiswa">
@@ -201,13 +203,13 @@
 									<div class="form-group">
 										<label>Nama</label>
 										<input type="text" name="mp_peng_nama" id="mp_peng_nama" class="form-control"
-											placeholder="Nama Pengganti" value="<?= set_value('mp_peng_nama'); ?>" readonly>
+											placeholder="Nama Pengganti" value="<?= $hktn->hen_gan_nama; ?>" readonly>
 										<?= form_error('mp_peng_nama'); ?>
 									</div>
 									<div class="form-group">
 										<label>Status</label>
 										<input type="text" name="mp_peng_sts" id="mp_peng_sts" class="form-control"
-											placeholder="Status Pengganti" value="<?= set_value('mp_peng_sts'); ?>" readonly>
+											placeholder="Status Pengganti" value="<?= $hktn->hen_gan_sts; ?>" readonly>
 										<?= form_error('mp_peng_sts'); ?>
 									</div>
 
@@ -216,6 +218,7 @@
 									</div>
 								</div>
 							</form>
+						<?php } ?>
                     <?php } ?>
 					</div>
 				</div>
