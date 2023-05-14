@@ -797,10 +797,24 @@ class Dashboard extends CI_Controller {
             'hadir_id' => $id
         );
 
-        $this->m_data->delete_data( $where, 'hadir' );
-        $this->m_data->delete_data( $where, 'henkaten' );
+        $isDeleteHenkaten = $this->m_data->delete_data( $where, 'henkaten' );
 
-        redirect( base_url().'dashboard/hadir' );
+        if ($isDeleteHenkaten > 0) {
+            $isDeleteHadir = $this->m_data->delete_data( $where, 'hadir' );
+
+            if ($isDeleteHadir > 0) {
+
+                $data[ 'message' ] = '<div class="alert alert-success" role="alert">Berhasil, Data berhasil dihapus</div>';
+                $this->session->set_flashdata( 'message', $data[ 'message' ] );
+
+                redirect( base_url().'dashboard/hadir' );
+            }
+        } else {
+            $data[ 'message' ] = '<div class="alert alert-success" role="alert">Gagal, Data gagal dihapus</div>';
+            $this->session->set_flashdata( 'message', $data[ 'message' ] );
+
+            redirect( base_url().'dashboard/hadir' );
+        }
     }
     // END CRUD hadir
 
