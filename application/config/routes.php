@@ -9,6 +9,8 @@ $route['login'] = 'login';
 
 // route dashboard
 $route['dashboard'] = 'dashboard';
+$route['dashboard/proses_forward_chaining'] = 'dashboard/proses_forward_chaining';
+$route['dashboard/absen_update'] = 'dashboard/absen_update';
 
 // // route untuk halaman blog
 $route['blog'] = 'welcome/blog';

@@ -6,6 +6,9 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title>HMS | Dashboard</title>
     <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
     <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/1.5.6/css/buttons.dataTables.min.css">
 
@@ -120,13 +123,38 @@
                     <?php 
 					    if($this->session->userdata('level') == "admin"){
 					?>
-                    <li>
+                    <!-- <li>
                         <a href="<?= base_url().'dashboard/jalur' ?>">
                             <i class="glyphicon glyphicon-sort"></i>
                             <span>MASTER JALUR</span>
                         </a>
+                    </li> -->
+                    <!-- <li>
+                        <a href="<?= base_url().'dashboard/absen' ?>">
+                            <i class="glyphicon glyphicon-sort"></i>
+                            <span>MASTER Absen</span>
+                        </a>
+                    </li> -->
+                    <li>
+                        <a href="<?= base_url().'dashboard/karyawan' ?>">
+                            <i class="glyphicon glyphicon-sort"></i>
+                            <span>MASTER karyawan</span>
+                        </a>
+                    </li>
+                    
+                    <li>
+                        <a href="<?= base_url().'dashboard/dataset' ?>">
+                            <i class="glyphicon glyphicon-sort"></i>
+                            <span>MASTER Data</span>
+                        </a>
                     </li>
                     <li>
+                        <a href="<?= base_url().'dashboard/pengganti' ?>">
+                            <i class="glyphicon glyphicon-sort"></i>
+                            <span>MASTER Pengganti</span>
+                        </a>
+                    </li>
+                    <!-- <li>
                         <a href="<?= base_url().'dashboard/pos' ?>">
                             <i class="glyphicon glyphicon-link"></i>
                             <span>MASTER POS</span>
@@ -144,7 +172,7 @@
                             <span>HENKATEN</span>
                         </a>
                     </li>
-                    <!-- <li>
+                    <li>
 						<a href="<?= base_url().'dashboard/skil' ?>">
 							<i class="fa fa-pencil"></i>
 							<span>SKILL MANAJEMEN</span>
@@ -163,7 +191,7 @@
                     <?php 
 					    if($this->session->userdata('level') == "spv" || $this->session->userdata('level') == "Foreman"){
 					?>
-                    <li>
+                    <!-- <li>
                         <a href="<?= base_url().'dashboard/pos' ?>">
                             <i class="glyphicon glyphicon-link"></i>
                             <span>MASTER POS</span>
@@ -181,13 +209,13 @@
                             <span>HENKATEN</span>
                         </a>
                     </li>
-                    <!-- <li>
+                    <li>
 						<a href="<?= base_url().'dashboard/skil' ?>">
 							<i class="fa fa-pencil"></i>
 							<span>SKILL MANAJEMEN</span>
 						</a>
-					</li>
-					<li>
+					</li> -->
+					<!-- <li>
 						<a href="<?= base_url().'dashboard/mp' ?>">
 							<i class="fa fa-pencil"></i>
 							<span>MP MANAJEMEN</span>
@@ -197,12 +225,12 @@
 					    } 
 					?>
 
-                    <!-- <li>
-						<a href="<?= base_url().'dashboard/spot' ?>">
+                    <li>
+						<a href="<?= base_url().'dashboard/absen' ?>">
 							<i class="fa fa-pencil"></i>
-							<span>MASTER SPOT</span>
+							<span>MASTER Absen</span>
 						</a>
-					</li> -->
+					</li>
 
                     <li>
                         <a href="<?= base_url().'dashboard/profil' ?>">

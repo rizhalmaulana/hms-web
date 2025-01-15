@@ -24,7 +24,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
 |
 */
 date_default_timezone_set("Asia/Jakarta");
-$config['base_url'] = 'http://127.0.0.1:8080/';
+$config['base_url'] = 'http://172.17.10.13:8080/';
 
 /*
 |--------------------------------------------------------------------------

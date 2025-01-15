@@ -10,6 +10,7 @@ class Dashboard extends CI_Controller {
 
         $this->load->model( 'm_data' );
         $this->load->model( 'globalmodel' );
+        $this->load->database();
 
         $this->load->library( 'form_validation' );
         $this->jalur = $this->session->userdata( 'jalur' );
@@ -125,11 +126,11 @@ class Dashboard extends CI_Controller {
 
     //autocomplete absen
 
-    public function absen() {
-        $absen_id = $_GET[ 'absen_id' ];
-        $absen = $this->m_data->absen( $absen_id )->result();
-        echo json_encode( $absen );
-    }
+    // public function absen() {
+    //     $absen_id = $_GET[ 'absen_id' ];
+    //     $absen = $this->m_data->absen( $absen_id )->result();
+    //     echo json_encode( $absen );
+    // }
 
     //autocomplete pos
 
@@ -243,9 +244,300 @@ class Dashboard extends CI_Controller {
     }
     // END CRUD jalur
 
-    // CRUD POS
 
-    public function pos() {
+// Start CRUD Karyawan
+// view karyawan
+public function karyawan() {
+    $data[ 'karyawan' ] = $this->m_data->get_data( 'karyawan' )->result();
+
+    $this->load->view( 'dashboard/v_header' );
+    $this->load->view( 'dashboard/v_karyawan', $data );
+    $this->load->view( 'dashboard/v_footer' );
+}
+
+
+
+
+// END CRUD Karyawan
+
+
+// Start CRUD Absen
+//view absen
+public function absen() {
+    $data['absen'] = $this->db->query('SELECT absen.id_absen, absen.id_dataset, absen.tgl_absen, karyawan.nama, data_set.pos, absen.ket FROM absen JOIN data_set ON absen.id_dataset = data_set.id_dataset JOIN karyawan ON data_set.id_kar = karyawan.id_kar')->result();
+    $data['isKaryawanAbsent'] = $this->db->query('SELECT absen.id_absen, absen.id_dataset, pengganti.id_ganti , pengganti.id_data_set_pengganti FROM absen JOIN pengganti ON absen.id_absen = pengganti.id_absen')->result();
+
+    $this->load->view('dashboard/v_header');
+    $this->load->view('dashboard/v_absen', $data );
+    $this->load->view('dashboard/v_footer');
+}
+
+//fungsi tambah absen
+public function absen_tambah() {
+    $data[ 'absen' ] = $this->m_data->get_data( 'absen' )->result();
+    $data[ 'karyawan' ] = $this->db->query( 'SELECT id_kar, nama FROM karyawan' )->result();
+
+    $this->load->view( 'dashboard/v_header');
+    $this->load->view( 'dashboard/v_absen_tambah', $data );
+    $this->load->view( 'dashboard/v_footer' );
+}
+
+public function absen_aksi() {
+    $this->form_validation->set_rules( 'tgl_absen', 'tgl_absen', 'required' );
+    $this->form_validation->set_rules( 'karyawan', 'karyawan', 'required' );
+    $this->form_validation->set_rules( 'ket', 'ket', 'required' );
+    
+    if ( $this->form_validation->run() != false ) {
+        
+        $tgl_absen = $this->input->post( 'tgl_absen' );
+        $id_karyawan = $this->input->post( 'karyawan' );
+        $ket = $this->input->post( 'ket' );
+
+        $data['data_karyawan_absen'] = $this->db->query( "SELECT data_set.id_dataset, data_set.pos FROM karyawan 
+        JOIN data_set ON karyawan.id_kar = data_set.id_kar 
+        WHERE karyawan.id_kar='". $id_karyawan ."'" )->row();
+
+        if ($data['data_karyawan_absen'] != null) {
+            $result_dataset = (array)$data['data_karyawan_absen'];
+            
+            $data = array(   
+                'id_dataset' => $result_dataset['id_dataset'],
+                'tgl_absen'=> $tgl_absen,    
+                'pos_absen' => $result_dataset['pos'],
+                'ket' => $ket,
+            );
+
+            $this->m_data->insert_data( $data, 'absen' );
+            redirect( base_url().'dashboard/absen' );
+        } else {
+            redirect(base_url().'dashboard/absen_tambah');
+        }
+
+    } else {
+        $this->load->view( 'dashboard/v_header' );
+        $this->load->view( 'dashboard/v_absen_tambah' );
+        $this->load->view( 'dashboard/v_footer' );
+    }
+} // end fungsi tambah absen
+
+
+// END CRUD Absen
+
+
+// Start CRUD Dataset
+
+public function dataset() {
+    $this->load->view( 'dashboard/v_header' );
+    $this->load->view( 'dashboard/v_dataset', $data );
+    $this->load->view( 'dashboard/v_footer' );
+}
+// END CRUD Data set
+
+// Start CRUD Pengganti
+// view data pengganti
+public function pengganti() {
+    $data['pengganti'] = $this->db->query("
+    SELECT pengganti.id_ganti as id_pengganti, pengganti.nama_ganti as nama_pengganti, 
+    data_set.pos, data_set.jabatan as jabatan_pengganti, data_set.sts_skill as skill_pengganti, 
+    karyawan.nama as karyawan_absen, absen.tgl_absen
+    FROM pengganti 
+    JOIN data_set ON pengganti.id_dataset = data_set.id_dataset
+    JOIN absen ON pengganti.id_absen = absen.id_absen 
+    JOIN karyawan ON karyawan.id_kar = data_set.id_kar")->result();
+
+    $this->load->view( 'dashboard/v_header' );
+    $this->load->view( 'dashboard/v_pengganti', $data);
+    $this->load->view( 'dashboard/v_footer' );
+}
+
+public function pengganti_hapus($id) {
+    $where = array(
+        'id_ganti' => $id
+    );
+
+    $this->m_data->delete_data($where, 'pengganti');
+    redirect( base_url().'dashboard/pengganti' );
+}
+
+public function pengganti_aksi() {
+    $data[ 'absen' ] = $this->db->query('INSERT INTO absen (id_absen, id_dataset, ket');
+    $this->form_validation->set_rules( 'karyawan', 'karyawan', 'required' );
+    $this->form_validation->set_rules( 'pos', 'pos', 'required' );
+    $this->form_validation->set_rules( 'ket', 'ket', 'required' );
+    
+
+    if ( $this->form_validation->run() != false ) {
+        $id_kar = $this->input->post( 'karyawan' );
+        $pos = $this->input->post( 'pos' );
+        $ket = $this->input->post( 'ket' );
+      
+
+        $data = array(
+            
+            'karyawan' => $id_kar,
+            'pos' => $pos,
+            'ket' => $ket,
+            
+        );
+
+        $this->m_data->insert_data( $data, 'absen' );
+
+        redirect( base_url().'dashboard/absen' );
+
+    } else {
+        $this->load->view( 'dashboard/v_header' );
+        $this->load->view( 'dashboard/v_absen_tambah' );
+        $this->load->view( 'dashboard/v_footer' );
+    }
+} // end fungsi tambah absen
+
+//Start Fungsi edit Absen
+
+public function absen_edit( $id ) { 
+    $where = array(
+        'id_absen' => $id
+    );
+
+    $result_data_set = $this->db->query( "SELECT absen.id_absen, absen.id_dataset, data_set.id_kar, 
+    absen.pos_absen, absen.ket, data_set.jabatan, data_set.sts_skill FROM absen 
+    JOIN data_set ON absen.id_dataset = data_set.id_dataset
+    WHERE absen.id_absen='". $id ."'" )->row();
+
+    if ($result_data_set != null) {
+        $data['getDataset'] = $result_data_set;
+
+        $result_data_karyawan = $this->m_data->get_data_karyawan($data['getDataset']->id_kar)->row();
+        $data['getDataKaryawan'] = $result_data_karyawan;
+    } else {
+        $data['getDataKaryawan'] = null;
+    }
+
+    // Buatkan Query untuk mencari penganti karyawan yang cuti/sakit
+
+    $this->load->view( 'dashboard/v_header' );
+    $this->load->view( 'dashboard/v_absen_edit', $data );
+    $this->load->view( 'dashboard/v_footer' );
+}
+
+public function proses_forward_chaining() {
+    header('Content-Type: application/json');
+
+    if ($this->input->server('REQUEST_METHOD') === 'POST') {
+        // Get the data sent from the AJAX request
+        $id_absen = $this->input->post('id_absen');
+        $id_dataset = $this->input->post('id_dataset');
+        $id_kar = $this->input->post('id_kar');
+        $pos_absen = $this->input->post('pos_absen');
+        $jabatan = $this->input->post('jabatan');
+        $skill = $this->input->post('sts_skill');
+
+        $query = $this->m_data->find_karyawan_pengganti($pos_absen, $jabatan, $skill);
+        
+        if ($query != null && $id_dataset != "" && $id_kar != "") {
+            $checkCalonPengganti = $this->m_data->proses_algoritma($query, $id_dataset, $id_kar, $id_absen, $pos_absen, $jabatan);
+
+            if (count($checkCalonPengganti) > 0) {
+                $response = [
+                    'success' => true,
+                    'message' => "Berhasil Proses Forward Chaining",
+                    'data' => $checkCalonPengganti
+                ];                
+            } else {
+                $response = [
+                    'success' => true,
+                    'message' => "Pengganti Tidak Tersedia.",
+                    'data' => null
+                ];
+            }
+        } else {
+            $response = [
+                'success' => false,
+                'message' => "Gagal Proses Forward Chaining",
+                'data' => null
+            ];
+        }
+        
+        // Return the response as JSON
+        echo json_encode($response);
+    } else {
+        $response = [
+            'success' => false,
+            'message' => 'Invalid Request',
+            'data' => null
+        ];
+        echo json_encode($response);
+    }
+}
+
+public function absen_update() {
+    $this->form_validation->set_rules( 'id_absen', 'id_absen', 'required' );
+    $this->form_validation->set_rules( 'id_dataset', 'id_dataset', 'required' );
+
+    if ( $this->form_validation->run() != false ) {
+        $id_absen = $this->input->post('id_absen');
+        $id_dataset = $this->input->post('id_dataset');
+        $id_dataset_pengganti = $this->input->post('id_dataset_pengganti');
+        $nama_karyawan = $this->input->post('nama_karyawan_ganti');
+
+        $data = array(
+            'id_dataset' => $id_dataset,
+            'id_absen' => $id_absen,
+            'id_data_set_pengganti' => $id_dataset_pengganti,
+            'nama_ganti' => $nama_karyawan,
+        );
+
+        $this->m_data->insert_data($data, 'pengganti');
+        redirect( base_url().'dashboard/pengganti');
+
+    } else {
+
+        $id = $this->input->post( 'id' );
+        $where = array(
+            'pos_id' => $id
+        );
+        $data[ 'pos' ] = $this->m_data->edit_data( $where, 'pos' )->result();
+        $data[ 'jalur' ] = $this->m_data->get_data( 'jalur' )->result();
+        $this->load->view( 'dashboard/v_header' );
+        $this->load->view( 'dashboard/v_absen_edit', $data );
+        $this->load->view( 'dashboard/v_footer' );
+    }
+}
+
+//end proses edit
+
+
+//start fungsi delete absen
+public function absen_hapus( $id ) {
+    $where = array(
+        'id_absen' => $id
+    );
+
+    $where_pengganti = array(
+        'id_absen' => $id
+    );
+
+    $this->m_data->delete_data($where, 'absen');
+    $this->m_data->delete_data($where_pengganti, 'pengganti');
+
+    redirect( base_url().'dashboard/absen' );
+}
+
+
+
+
+// END CRUD Data set
+
+
+
+
+
+
+
+
+
+/// CRUD KARYAWAN MULAI
+
+public function pos() {
         $jalur = $this->session->userdata( 'jalur' );
         $pos = $this->session->userdata( 'pos' );
         $username = $this->session->userdata( 'username' );
@@ -358,6 +650,7 @@ class Dashboard extends CI_Controller {
         redirect( base_url().'dashboard/pos' );
     }
     // END CRUD pos
+
 
     // CRUD MP
 
@@ -519,304 +812,304 @@ class Dashboard extends CI_Controller {
     }
     // END CRUD mp
 
-    // CRUD hadir
+    // // CRUD hadir
 
-    public function hadir() {
-        $data[ 'message' ] = $this->session->flashdata( 'message' );
+    // public function hadir() {
+    //     $data[ 'message' ] = $this->session->flashdata( 'message' );
         
-        $jalur = $this->session->userdata( 'jalur' );
-        $pos = $this->session->userdata( 'pos' );
-        $username = $this->session->userdata( 'username' );
-        $level = $this->session->userdata( 'level' );
-        $status = $this->session->userdata( 'status' );
+    //     $jalur = $this->session->userdata( 'jalur' );
+    //     $pos = $this->session->userdata( 'pos' );
+    //     $username = $this->session->userdata( 'username' );
+    //     $level = $this->session->userdata( 'level' );
+    //     $status = $this->session->userdata( 'status' );
 
-        if ( $level == 'admin' ) {
-            $data[ 'hadir' ] = $this->db->query( 'SELECT * FROM hadir, jalur WHERE hadir_jalur=jalur_id order by hadir_tgl_in DESC' )->result();
-        } else {
-            if ( $level == 'Foreman' ) {
-                $data[ 'hadir' ] = $this->db->query( "SELECT * FROM hadir, jalur WHERE hadir_jalur='$jalur' order by hadir_tgl_in DESC" )->result();
-            } else if ( $level == 'spv' ) {
-                $data[ 'hadir' ] = $this->db->query( "SELECT * FROM hadir, jalur WHERE hadir_jalur='$jalur' order by hadir_tgl_in DESC" )->result();
-            }
-        }
+    //     if ( $level == 'admin' ) {
+    //         $data[ 'hadir' ] = $this->db->query( 'SELECT * FROM hadir, jalur WHERE hadir_jalur=jalur_id order by hadir_tgl_in DESC' )->result();
+    //     } else {
+    //         if ( $level == 'Foreman' ) {
+    //             $data[ 'hadir' ] = $this->db->query( "SELECT * FROM hadir, jalur WHERE hadir_jalur='$jalur' order by hadir_tgl_in DESC" )->result();
+    //         } else if ( $level == 'spv' ) {
+    //             $data[ 'hadir' ] = $this->db->query( "SELECT * FROM hadir, jalur WHERE hadir_jalur='$jalur' order by hadir_tgl_in DESC" )->result();
+    //         }
+    //     }
 
-        $data[ 'record' ] =  $this->m_data->tampil_data();
+    //     $data[ 'record' ] =  $this->m_data->tampil_data();
 
-        $data[ 'jumlah_mp' ] = $this->m_data->get_data( 'mp' )->num_rows();
-        $data[ 'jumlah_hadir' ] = $this->m_data->get_data( 'hadir' )->num_rows();
-        $data[ 'jumlah_memberA' ] = $this->db->query( "SELECT * FROM mp WHERE mp_shift='A'" )->num_rows();
+    //     $data[ 'jumlah_mp' ] = $this->m_data->get_data( 'mp' )->num_rows();
+    //     $data[ 'jumlah_hadir' ] = $this->m_data->get_data( 'hadir' )->num_rows();
+    //     $data[ 'jumlah_memberA' ] = $this->db->query( "SELECT * FROM mp WHERE mp_shift='A'" )->num_rows();
 
-        $this->load->view( 'dashboard/v_header' );
-        $this->load->view( 'dashboard/v_hadir', $data );
-        $this->load->view( 'dashboard/v_footer' );
-    }
+    //     $this->load->view( 'dashboard/v_header' );
+    //     $this->load->view( 'dashboard/v_hadir', $data );
+    //     $this->load->view( 'dashboard/v_footer' );
+    // }
 
-    public function hadir_tambah() {
-        $data[ 'message' ] = $this->session->flashdata( 'message' );
+    // public function hadir_tambah() {
+    //     $data[ 'message' ] = $this->session->flashdata( 'message' );
 
-        $data[ 'record' ] =  $this->m_data->tampil_data();
-        $data[ 'data_absen' ] =  $this->m_data->absen_data();
+    //     $data[ 'record' ] =  $this->m_data->tampil_data();
+    //     $data[ 'data_absen' ] =  $this->m_data->absen_data();
 
-        $this->load->view( 'dashboard/v_header' );
-        $this->load->view( 'dashboard/v_hadir_tambah', $data );
-        $this->load->view( 'dashboard/v_footer' );
+    //     $this->load->view( 'dashboard/v_header' );
+    //     $this->load->view( 'dashboard/v_hadir_tambah', $data );
+    //     $this->load->view( 'dashboard/v_footer' );
 
-    }
+    // }
 
-    public function hadir_aksi() {
-        $this->form_validation->set_rules( 'mp_id', 'mp_id', 'required' );
-        $this->form_validation->set_rules( 'mp_nama', 'mp_nama', 'required' );
-        $this->form_validation->set_rules( 'mp_jalur', 'mp_jalur', 'required' );
-        $this->form_validation->set_rules( 'mp_pos', 'mp_pos', 'required' );
-        $this->form_validation->set_rules( 'mp_status', 'mp_status', 'required' );
-        $this->form_validation->set_rules( 'mp_shift', 'mp_shift', 'required' );
-        $this->form_validation->set_rules( 'absen_id', 'absen_id', 'required' );
-        $this->form_validation->set_rules( 'absen_ket', 'absen_ket', 'required' );
+    // public function hadir_aksi() {
+    //     $this->form_validation->set_rules( 'mp_id', 'mp_id', 'required' );
+    //     $this->form_validation->set_rules( 'mp_nama', 'mp_nama', 'required' );
+    //     $this->form_validation->set_rules( 'mp_jalur', 'mp_jalur', 'required' );
+    //     $this->form_validation->set_rules( 'mp_pos', 'mp_pos', 'required' );
+    //     $this->form_validation->set_rules( 'mp_status', 'mp_status', 'required' );
+    //     $this->form_validation->set_rules( 'mp_shift', 'mp_shift', 'required' );
+    //     $this->form_validation->set_rules( 'absen_id', 'absen_id', 'required' );
+    //     $this->form_validation->set_rules( 'absen_ket', 'absen_ket', 'required' );
 
-        if ( $this->form_validation->run() != false ) {
-            $tanggal = date( 'Y-m-d H:i:s' );
-            $tgl_in = $this->input->post( 'tgl_in' );
-            $mp_id = $this->input->post( 'mp_id' );
-            $mp_nama = $this->input->post( 'mp_nama' );
-            $mp_jalur = $this->input->post( 'mp_jalur' );
-            $mp_pos = $this->input->post( 'mp_pos' );
-            $mp_status = $this->input->post( 'mp_status' );
-            $mp_shift = $this->input->post( 'mp_shift' );
-            $absen_id = $this->input->post( 'absen_id' );
-            $absen_ket = $this->input->post( 'absen_ket' );
+    //     if ( $this->form_validation->run() != false ) {
+    //         $tanggal = date( 'Y-m-d H:i:s' );
+    //         $tgl_in = $this->input->post( 'tgl_in' );
+    //         $mp_id = $this->input->post( 'mp_id' );
+    //         $mp_nama = $this->input->post( 'mp_nama' );
+    //         $mp_jalur = $this->input->post( 'mp_jalur' );
+    //         $mp_pos = $this->input->post( 'mp_pos' );
+    //         $mp_status = $this->input->post( 'mp_status' );
+    //         $mp_shift = $this->input->post( 'mp_shift' );
+    //         $absen_id = $this->input->post( 'absen_id' );
+    //         $absen_ket = $this->input->post( 'absen_ket' );
 
-            $data = array(
-                'hadir_tgl' => $tanggal,
-                'hadir_tgl_in' => $tgl_in,
-                'hadir_npk' => $mp_id,
-                'hadir_nama' => $mp_nama,
-                'hadir_jalur' => $mp_jalur,
-                'hadir_pos' => $mp_pos,
-                'hadir_status' => $mp_status,
-                'hadir_shift' => $mp_shift,
-                'hadir_kode' => $absen_id,
-                'hadir_ket' => $absen_ket,
-                'hadir_gan_id' => 0,
-                'hadir_gan_nama' => "",
-                'hadir_gan_sts' => "",
-            );
+    //         $data = array(
+    //             'hadir_tgl' => $tanggal,
+    //             'hadir_tgl_in' => $tgl_in,
+    //             'hadir_npk' => $mp_id,
+    //             'hadir_nama' => $mp_nama,
+    //             'hadir_jalur' => $mp_jalur,
+    //             'hadir_pos' => $mp_pos,
+    //             'hadir_status' => $mp_status,
+    //             'hadir_shift' => $mp_shift,
+    //             'hadir_kode' => $absen_id,
+    //             'hadir_ket' => $absen_ket,
+    //             'hadir_gan_id' => 0,
+    //             'hadir_gan_nama' => "",
+    //             'hadir_gan_sts' => "",
+    //         );
 
-            $result = $this->m_data->insert_data( $data, 'hadir' );
-            $data['id_hadir'] = $this->db->insert_id();
+    //         $result = $this->m_data->insert_data( $data, 'hadir' );
+    //         $data['id_hadir'] = $this->db->insert_id();
 
-            if ( $result ) {
-                $data[ 'insert_henkaten' ] = array(
-                    'hadir_id' => $data['id_hadir'],
-                    'hen_npk' => $mp_id,
-                    'hen_nama' => $mp_nama,
-                    'hen_jalur' => $mp_jalur,
-                    'hen_status' => $mp_status,
-                    'hen_shift' => $mp_shift,
-                    'hen_ganti' => "",
-                    'hen_gan_nama' => "",
-                    'hen_gan_sts' => "",
-                    'status_ganti' => "Menunggu Pengganti"
-                );
+    //         if ( $result ) {
+    //             $data[ 'insert_henkaten' ] = array(
+    //                 'hadir_id' => $data['id_hadir'],
+    //                 'hen_npk' => $mp_id,
+    //                 'hen_nama' => $mp_nama,
+    //                 'hen_jalur' => $mp_jalur,
+    //                 'hen_status' => $mp_status,
+    //                 'hen_shift' => $mp_shift,
+    //                 'hen_ganti' => "",
+    //                 'hen_gan_nama' => "",
+    //                 'hen_gan_sts' => "",
+    //                 'status_ganti' => "Menunggu Pengganti"
+    //             );
 
-                $replace = $this->m_data->insert_data( $data[ 'insert_henkaten' ], 'henkaten' );
+    //             $replace = $this->m_data->insert_data( $data[ 'insert_henkaten' ], 'henkaten' );
 
-                if ( $replace ) {
-                    $data[ 'message' ] = '<div class="alert alert-success" role="alert">Berhasil ubah data pengganti</div>';
-                    $this->session->set_flashdata( 'message', $data[ 'message' ] );
+    //             if ( $replace ) {
+    //                 $data[ 'message' ] = '<div class="alert alert-success" role="alert">Berhasil ubah data pengganti</div>';
+    //                 $this->session->set_flashdata( 'message', $data[ 'message' ] );
 
-                    redirect( base_url().'dashboard/henkaten' );
-                } else {
-                    $data[ 'message' ] = '<div class="alert alert-warning" role="alert">Maaf, Anda gagal tambah data pengganti</div>';
-                    $this->session->set_flashdata( 'message', $data[ 'message' ] );
+    //                 redirect( base_url().'dashboard/henkaten' );
+    //             } else {
+    //                 $data[ 'message' ] = '<div class="alert alert-warning" role="alert">Maaf, Anda gagal tambah data pengganti</div>';
+    //                 $this->session->set_flashdata( 'message', $data[ 'message' ] );
 
-                    redirect( base_url().'dashboard/hadir' );
-                }
-            }
+    //                 redirect( base_url().'dashboard/hadir' );
+    //             }
+    //         }
 
-            redirect( base_url().'dashboard/hadir' );
+    //         redirect( base_url().'dashboard/hadir' );
 
-        } else {
-            $this->load->view( 'dashboard/v_header' );
-            $this->load->view( 'dashboard/v_hadir_tambah' );
-            $this->load->view( 'dashboard/v_footer' );
-        }
-    }
+    //     } else {
+    //         $this->load->view( 'dashboard/v_header' );
+    //         $this->load->view( 'dashboard/v_hadir_tambah' );
+    //         $this->load->view( 'dashboard/v_footer' );
+    //     }
+    // }
 
-    public function hadir_edit( $id ) {
-        $data[ 'message' ] = $this->session->flashdata( 'message' );
+    // public function hadir_edit( $id ) {
+    //     $data[ 'message' ] = $this->session->flashdata( 'message' );
 
-        $this->form_validation->set_rules( 'mp_id', 'mp_id', 'required' );
-        $this->form_validation->set_rules( 'mp_nama', 'mp_nama', 'required' );
-        $this->form_validation->set_rules( 'mp_jalur', 'mp_jalur', 'required' );
-        $this->form_validation->set_rules( 'mp_pos', 'mp_pos', 'required' );
-        $this->form_validation->set_rules( 'mp_status', 'mp_status', 'required' );
-        $this->form_validation->set_rules( 'mp_shift', 'mp_shift', 'required' );
-        $this->form_validation->set_rules( 'absen_id', 'absen_id', 'required' );
-        $this->form_validation->set_rules( 'absen_ket', 'absen_ket', 'required' );
-        $this->form_validation->set_rules( 'mp_peng_id', 'id pengganti', 'required' );
-        $this->form_validation->set_rules( 'mp_peng_nama', 'nama pengganti', 'required' );
-        $this->form_validation->set_rules( 'mp_peng_sts', 'status pengganti', 'required' );
+    //     $this->form_validation->set_rules( 'mp_id', 'mp_id', 'required' );
+    //     $this->form_validation->set_rules( 'mp_nama', 'mp_nama', 'required' );
+    //     $this->form_validation->set_rules( 'mp_jalur', 'mp_jalur', 'required' );
+    //     $this->form_validation->set_rules( 'mp_pos', 'mp_pos', 'required' );
+    //     $this->form_validation->set_rules( 'mp_status', 'mp_status', 'required' );
+    //     $this->form_validation->set_rules( 'mp_shift', 'mp_shift', 'required' );
+    //     $this->form_validation->set_rules( 'absen_id', 'absen_id', 'required' );
+    //     $this->form_validation->set_rules( 'absen_ket', 'absen_ket', 'required' );
+    //     $this->form_validation->set_rules( 'mp_peng_id', 'id pengganti', 'required' );
+    //     $this->form_validation->set_rules( 'mp_peng_nama', 'nama pengganti', 'required' );
+    //     $this->form_validation->set_rules( 'mp_peng_sts', 'status pengganti', 'required' );
 
-        $where = array(
-            'hadir_id' => $id
-        );
+    //     $where = array(
+    //         'hadir_id' => $id
+    //     );
 
-        $data[ 'record' ] =  $this->globalmodel->get_list( 'mp', "mp_jalur = '".$this->jalur."'" );
+    //     $data[ 'record' ] =  $this->globalmodel->get_list( 'mp', "mp_jalur = '".$this->jalur."'" );
 
-        $data[ 'hadir' ] = $this->m_data->edit_data( $where, 'hadir' )->result();
-        $data[ 'henkaten' ] = $this->m_data->edit_data( $where, 'henkaten' )->result();
+    //     $data[ 'hadir' ] = $this->m_data->edit_data( $where, 'hadir' )->result();
+    //     $data[ 'henkaten' ] = $this->m_data->edit_data( $where, 'henkaten' )->result();
 
-        $data[ 'kodeabsen' ] = $this->m_data->get_data( 'kodeabsen' )->result();
+    //     $data[ 'kodeabsen' ] = $this->m_data->get_data( 'kodeabsen' )->result();
 
-        $data[ 'record_tambah' ] =  $this->m_data->tampil_data();
-        $data[ 'data_absen' ] =  $this->m_data->absen_data();
+    //     $data[ 'record_tambah' ] =  $this->m_data->tampil_data();
+    //     $data[ 'data_absen' ] =  $this->m_data->absen_data();
 
-        $this->load->view( 'dashboard/v_header' );
-        $this->load->view( 'dashboard/v_hadir_edit', $data );
-        $this->load->view( 'dashboard/v_footer' );
-    }
+    //     $this->load->view( 'dashboard/v_header' );
+    //     $this->load->view( 'dashboard/v_hadir_edit', $data );
+    //     $this->load->view( 'dashboard/v_footer' );
+    // }
 
-    public function hadir_update() {
-        $data[ 'message' ] = $this->session->flashdata( 'message' );
+    // public function hadir_update() {
+    //     $data[ 'message' ] = $this->session->flashdata( 'message' );
 
-        $this->form_validation->set_rules( 'mp_id', 'mp_id', 'required' );
+    //     $this->form_validation->set_rules( 'mp_id', 'mp_id', 'required' );
 
-        if ( $this->form_validation->run() != false ) {
-            $id = $this->input->post( 'id' );
-            $tanggal = date( 'Y-m-d H:i:s' );
-            $tgl_in = $this->input->post( 'tgl_in' );
-            $mp_id = $this->input->post( 'mp_id' );
-            $mp_nama = $this->input->post( 'mp_nama' );
-            $mp_jalur = $this->input->post( 'mp_jalur' );
-            $mp_status = $this->input->post( 'mp_status' );
-            $mp_shift = $this->input->post( 'mp_shift' );
-            $absen_id = $this->input->post( 'absen_id' );
-            $absen_ket = $this->input->post( 'absen_ket' );
-            $mp_peng_id = $this->input->post( 'mp_peng_id' );
-            $mp_peng_nama = $this->input->post( 'mp_peng_nama' );
-            $mp_peng_sts = $this->input->post( 'mp_peng_sts' );
+    //     if ( $this->form_validation->run() != false ) {
+    //         $id = $this->input->post( 'id' );
+    //         $tanggal = date( 'Y-m-d H:i:s' );
+    //         $tgl_in = $this->input->post( 'tgl_in' );
+    //         $mp_id = $this->input->post( 'mp_id' );
+    //         $mp_nama = $this->input->post( 'mp_nama' );
+    //         $mp_jalur = $this->input->post( 'mp_jalur' );
+    //         $mp_status = $this->input->post( 'mp_status' );
+    //         $mp_shift = $this->input->post( 'mp_shift' );
+    //         $absen_id = $this->input->post( 'absen_id' );
+    //         $absen_ket = $this->input->post( 'absen_ket' );
+    //         $mp_peng_id = $this->input->post( 'mp_peng_id' );
+    //         $mp_peng_nama = $this->input->post( 'mp_peng_nama' );
+    //         $mp_peng_sts = $this->input->post( 'mp_peng_sts' );
 
-            $where_get_data = array(
-                'hadir_id' => $id
-            );
+    //         $where_get_data = array(
+    //             'hadir_id' => $id
+    //         );
 
-            $where_get_data_henkaten = array(
-                'hen_npk' => $mp_id,
-                'hadir_id' => $id
-            );
+    //         $where_get_data_henkaten = array(
+    //             'hen_npk' => $mp_id,
+    //             'hadir_id' => $id
+    //         );
 
-            $get_data_hadir = $this->m_data->get_table( 'hadir', $where_get_data, '', '' );
+    //         $get_data_hadir = $this->m_data->get_table( 'hadir', $where_get_data, '', '' );
 
-            if ( $get_data_hadir->num_rows() > 0 ) {
+    //         if ( $get_data_hadir->num_rows() > 0 ) {
 
-                $get_data_henkaten = $this->m_data->get_table( 'henkaten', $where_get_data_henkaten, '', '' );
-                if ( $get_data_henkaten->num_rows() > 0 ) {
+    //             $get_data_henkaten = $this->m_data->get_table( 'henkaten', $where_get_data_henkaten, '', '' );
+    //             if ( $get_data_henkaten->num_rows() > 0 ) {
 
-                    $data[ 'update_henkaten' ] = array(
-                        'hadir_id' => $id,
-                        'hen_npk' => $mp_id,
-                        'hen_nama' => $mp_nama,
-                        'hen_jalur' => $mp_jalur,
-                        'hen_status' => $mp_status,
-                        'hen_shift' => $mp_shift,
-                        'hen_ganti' => $mp_peng_id,
-                        'hen_gan_nama' => $mp_peng_nama,
-                        'hen_gan_sts' => $mp_peng_sts,
-                        'status_ganti' => "Selesai"
-                    );
+    //                 $data[ 'update_henkaten' ] = array(
+    //                     'hadir_id' => $id,
+    //                     'hen_npk' => $mp_id,
+    //                     'hen_nama' => $mp_nama,
+    //                     'hen_jalur' => $mp_jalur,
+    //                     'hen_status' => $mp_status,
+    //                     'hen_shift' => $mp_shift,
+    //                     'hen_ganti' => $mp_peng_id,
+    //                     'hen_gan_nama' => $mp_peng_nama,
+    //                     'hen_gan_sts' => $mp_peng_sts,
+    //                     'status_ganti' => "Selesai"
+    //                 );
 
-                    $update_henkaten = $this->m_data->update_data( $where_get_data_henkaten, $data[ 'update_henkaten' ], 'henkaten' );
+    //                 $update_henkaten = $this->m_data->update_data( $where_get_data_henkaten, $data[ 'update_henkaten' ], 'henkaten' );
 
-                    if ( $update_henkaten ) {
-                        $data[ 'message' ] = '<div class="alert alert-success" role="alert">Berhasil ubah data pengganti</div>';
-                        $this->session->set_flashdata( 'message', $data[ 'message' ] );
+    //                 if ( $update_henkaten ) {
+    //                     $data[ 'message' ] = '<div class="alert alert-success" role="alert">Berhasil ubah data pengganti</div>';
+    //                     $this->session->set_flashdata( 'message', $data[ 'message' ] );
 
-                        redirect( base_url().'dashboard/henkaten' );
-                    } else {
-                        $data[ 'message' ] = '<div class="alert alert-warning" role="alert">Maaf, Anda gagal tambah data pengganti</div>';
-                        $this->session->set_flashdata( 'message', $data[ 'message' ] );
+    //                     redirect( base_url().'dashboard/henkaten' );
+    //                 } else {
+    //                     $data[ 'message' ] = '<div class="alert alert-warning" role="alert">Maaf, Anda gagal tambah data pengganti</div>';
+    //                     $this->session->set_flashdata( 'message', $data[ 'message' ] );
 
-                        redirect( base_url().'dashboard/hadir' );
-                    }
-                } else {
-                    $data[ 'insert_henkaten' ] = array(
-                        'hadir_id' => $id,
-                        'hen_npk' => $mp_id,
-                        'hen_nama' => $mp_nama,
-                        'hen_jalur' => $mp_jalur,
-                        'hen_status' => $mp_status,
-                        'hen_shift' => $mp_shift,
-                        'hen_ganti' => $mp_peng_id,
-                        'hen_gan_nama' => $mp_peng_nama,
-                        'hen_gan_sts' => $mp_peng_sts,
-                        'status_ganti' => "Menunggu Pengganti"
-                    );
+    //                     redirect( base_url().'dashboard/hadir' );
+    //                 }
+    //             } else {
+    //                 $data[ 'insert_henkaten' ] = array(
+    //                     'hadir_id' => $id,
+    //                     'hen_npk' => $mp_id,
+    //                     'hen_nama' => $mp_nama,
+    //                     'hen_jalur' => $mp_jalur,
+    //                     'hen_status' => $mp_status,
+    //                     'hen_shift' => $mp_shift,
+    //                     'hen_ganti' => $mp_peng_id,
+    //                     'hen_gan_nama' => $mp_peng_nama,
+    //                     'hen_gan_sts' => $mp_peng_sts,
+    //                     'status_ganti' => "Menunggu Pengganti"
+    //                 );
 
-                    $replace = $this->m_data->insert_data( $data[ 'insert_henkaten' ], 'henkaten' );
+    //                 $replace = $this->m_data->insert_data( $data[ 'insert_henkaten' ], 'henkaten' );
 
-                    if ( $replace ) {
-                        $data[ 'message' ] = '<div class="alert alert-success" role="alert">Berhasil ubah data pengganti</div>';
-                        $this->session->set_flashdata( 'message', $data[ 'message' ] );
+    //                 if ( $replace ) {
+    //                     $data[ 'message' ] = '<div class="alert alert-success" role="alert">Berhasil ubah data pengganti</div>';
+    //                     $this->session->set_flashdata( 'message', $data[ 'message' ] );
 
-                        redirect( base_url().'dashboard/henkaten' );
-                    } else {
-                        $data[ 'message' ] = '<div class="alert alert-warning" role="alert">Maaf, Anda gagal tambah data pengganti</div>';
-                        $this->session->set_flashdata( 'message', $data[ 'message' ] );
+    //                     redirect( base_url().'dashboard/henkaten' );
+    //                 } else {
+    //                     $data[ 'message' ] = '<div class="alert alert-warning" role="alert">Maaf, Anda gagal tambah data pengganti</div>';
+    //                     $this->session->set_flashdata( 'message', $data[ 'message' ] );
 
-                        redirect( base_url().'dashboard/hadir' );
-                    }
-                }
-            } else {
-                $data[ 'message' ] = '<div class="alert alert-warning" role="alert">Maaf, Anda gagal ubah data absen dan tambah data pengganti</div>';
-                $this->session->set_flashdata( 'message', $data[ 'message' ] );
+    //                     redirect( base_url().'dashboard/hadir' );
+    //                 }
+    //             }
+    //         } else {
+    //             $data[ 'message' ] = '<div class="alert alert-warning" role="alert">Maaf, Anda gagal ubah data absen dan tambah data pengganti</div>';
+    //             $this->session->set_flashdata( 'message', $data[ 'message' ] );
 
-                redirect( base_url().'dashboard/hadir' );
-            }
-        } else {
-            $id = $this->input->post( 'id' );
-            $where = array(
-                'hadir_id' => $id
-            );
+    //             redirect( base_url().'dashboard/hadir' );
+    //         }
+    //     } else {
+    //         $id = $this->input->post( 'id' );
+    //         $where = array(
+    //             'hadir_id' => $id
+    //         );
 
-            $data[ 'record' ] =  $this->m_data->tampil_data();
-            $data[ 'hadir' ] = $this->m_data->edit_data( $where, 'hadir' )->result();
-            $data[ 'kodeabsen' ] = $this->m_data->get_data( 'kodeabsen' )->result();
+    //         $data[ 'record' ] =  $this->m_data->tampil_data();
+    //         $data[ 'hadir' ] = $this->m_data->edit_data( $where, 'hadir' )->result();
+    //         $data[ 'kodeabsen' ] = $this->m_data->get_data( 'kodeabsen' )->result();
 
-            $data[ 'jumlah_mp' ] = $this->m_data->get_data( 'mp' )->num_rows();
-            $data[ 'jumlah_hadir' ] = $this->m_data->get_data( 'hadir' )->num_rows();
-            $data[ 'jumlah_memberA' ] = $this->db->query( "SELECT * FROM mp WHERE  mp_shift='A'" )->num_rows();
+    //         $data[ 'jumlah_mp' ] = $this->m_data->get_data( 'mp' )->num_rows();
+    //         $data[ 'jumlah_hadir' ] = $this->m_data->get_data( 'hadir' )->num_rows();
+    //         $data[ 'jumlah_memberA' ] = $this->db->query( "SELECT * FROM mp WHERE  mp_shift='A'" )->num_rows();
 
-            $this->load->view( 'dashboard/v_header' );
-            $this->load->view( 'dashboard/v_henkaten', $data );
-            $this->load->view( 'dashboard/v_footer' );
-        }
-    }
+    //         $this->load->view( 'dashboard/v_header' );
+    //         $this->load->view( 'dashboard/v_henkaten', $data );
+    //         $this->load->view( 'dashboard/v_footer' );
+    //     }
+    // }
 
-    public function hadir_hapus( $id ) {
-        $where = array(
-            'hadir_id' => $id
-        );
+    // public function hadir_hapus( $id ) {
+    //     $where = array(
+    //         'hadir_id' => $id
+    //     );
 
-        $isDeleteHenkaten = $this->m_data->delete_data( $where, 'henkaten' );
+    //     $isDeleteHenkaten = $this->m_data->delete_data( $where, 'henkaten' );
 
-        if ($isDeleteHenkaten > 0) {
-            $isDeleteHadir = $this->m_data->delete_data( $where, 'hadir' );
+    //     if ($isDeleteHenkaten > 0) {
+    //         $isDeleteHadir = $this->m_data->delete_data( $where, 'hadir' );
 
-            if ($isDeleteHadir > 0) {
+    //         if ($isDeleteHadir > 0) {
 
-                $data[ 'message' ] = '<div class="alert alert-success" role="alert">Berhasil, Data berhasil dihapus</div>';
-                $this->session->set_flashdata( 'message', $data[ 'message' ] );
+    //             $data[ 'message' ] = '<div class="alert alert-success" role="alert">Berhasil, Data berhasil dihapus</div>';
+    //             $this->session->set_flashdata( 'message', $data[ 'message' ] );
 
-                redirect( base_url().'dashboard/hadir' );
-            }
-        } else {
-            $data[ 'message' ] = '<div class="alert alert-success" role="alert">Gagal, Data gagal dihapus</div>';
-            $this->session->set_flashdata( 'message', $data[ 'message' ] );
+    //             redirect( base_url().'dashboard/hadir' );
+    //         }
+    //     } else {
+    //         $data[ 'message' ] = '<div class="alert alert-success" role="alert">Gagal, Data gagal dihapus</div>';
+    //         $this->session->set_flashdata( 'message', $data[ 'message' ] );
 
-            redirect( base_url().'dashboard/hadir' );
-        }
-    }
-    // END CRUD hadir
+    //         redirect( base_url().'dashboard/hadir' );
+    //     }
+    // }
+    // // END CRUD hadir
 
     // CRUD Skill
 

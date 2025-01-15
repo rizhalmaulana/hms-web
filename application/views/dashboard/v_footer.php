@@ -46,6 +46,8 @@
 	<script src="https://cdn.datatables.net/buttons/1.5.6/js/buttons.html5.min.js"></script>
 	<script src="https://cdn.datatables.net/buttons/1.5.6/js/buttons.print.min.js"></script>
 
+	<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+	
 	<link rel="stylesheet" href="<?= base_url('assets/plugins/') ?>select2/css/select2.min.css">
 	<script src="<?= base_url('assets/plugins/') ?>select2/js/select2.min.js"></script>
 
